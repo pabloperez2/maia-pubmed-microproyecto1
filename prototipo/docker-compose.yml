@@ -1,0 +1,9 @@
+services:
+  rhetoric-app:
+    build: .
+    container_name: rhetoric-app
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_VERSION=rhetoric-heuristic-v0.0.1
+    restart: unless-stopped
