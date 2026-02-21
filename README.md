@@ -137,7 +137,7 @@ echo $! | tee ~/mlflow_5000.pid
 
 URL del tracking server:
 
-http://13.218.110.62:5000
+http://54.205.108.123:5000
 
 
 7. Configuración en Google Colab
