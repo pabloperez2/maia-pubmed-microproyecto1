@@ -1,130 +1,90 @@
-Microproyecto 1
+# Microproyecto 1: Sequential Sentence Classification in Medical Abstracts
 
-Sequential Sentence Classification in Medical Abstracts
+## Entrega 2 – Entrenamiento con Transformers y Tracking con MLflow 🚀
 
+### 1. Contexto del Proyecto
+En la investigación médica, los artículos científicos suelen presentarse en resúmenes estructurados donde cada oración cumple un rol específico: **Background, Objective, Methods, Results o Conclusions**.
 
-Entrega 2 – Entrenamiento con Transformers y Tracking con MLflow
+Sin embargo, muchos repositorios almacenan estos abstracts en texto plano sin segmentación explícita, lo que dificulta:
+* La revisión rápida de información científica crítica.
+* La búsqueda focalizada dentro de un abstract.
+* El desarrollo de herramientas automáticas de apoyo a investigadores.
 
-1. Contexto del Proyecto
+Este proyecto aborda el problema como una tarea de **clasificación supervisada a nivel de oración**, utilizando modelos basados en **Transformers** para identificar automáticamente el rol retórico de cada segmento en un abstract médico.
 
-En la investigación médica, los artículos científicos generalmente se presentan en resúmenes estructurados, donde cada oración cumple un rol específico dentro del razonamiento del estudio: Background, Objective, Methods, Results o Conclusions.
+**Pregunta de investigación:**
+> ¿Puede un sistema basado en procesamiento de lenguaje natural (NLP) clasificar automáticamente las oraciones de resúmenes médicos en categorías retóricas que faciliten su análisis y comprensión?
 
-Sin embargo, en muchos repositorios estos abstracts se encuentran en texto plano, sin segmentación explícita. Esto dificulta:
+---
 
-La revisión rápida de información científica.
+### 2. Dataset
+Se utiliza el dataset **PubMed RCT 20k**, un estándar en la industria disponible en Hugging Face:
+🔗 [armanc/pubmed-rct20k](https://huggingface.co/datasets/armanc/pubmed-rct20k)
 
-La búsqueda focalizada dentro de un abstract.
+**Características relevantes:**
+* **Total de registros:** 235,892 oraciones.
+* **Partición:**
+    * Entrenamiento: 176,642
+    * Validación: 29,672
+    * Prueba: 29,578
+* **Clases (Labels):** `Background`, `Objective`, `Methods`, `Results`, `Conclusions`.
 
-El desarrollo de herramientas automáticas de apoyo a investigadores.
+Cada registro incluye un `abstract_id` y un `sentence_id` para preservar el contexto secuencial de la publicación original.
 
-Este proyecto aborda el problema como una tarea de clasificación supervisada a nivel de oración, utilizando modelos basados en transformers para identificar automáticamente el rol retórico de cada oración en un abstract médico.
+---
 
-La pregunta que guía el proyecto es:
+### 3. Modelo Utilizado
+Para este experimento se seleccionó **SciBERT** (`allenai/scibert_scivocab_uncased`), un modelo de lenguaje pre-entrenado específicamente sobre corpus científico de gran escala.
 
-¿Puede un sistema basado en procesamiento de lenguaje natural clasificar automáticamente las oraciones de resúmenes médicos en categorías retóricas que faciliten su análisis y comprensión?
-
-2. Dataset
-
-Se utiliza el dataset PubMed RCT 20k, disponible públicamente en Hugging Face:
-
-https://huggingface.co/datasets/armanc/pubmed-rct20k
-
-Características relevantes:
-
-Total registros: 235,892
-
-Entrenamiento: 176,642
-
-Validación: 29,672
-
-Prueba: 29,578
-
-Clases:
-
-Background
-
-Objective
-
-Methods
-
-Results
-
-Conclusions
-
-Cada registro corresponde a una oración individual asociada a un abstract, identificado por abstract_id y su posición sentence_id.
-
-3. Modelo Utilizado
-
-En el notebook microproyecto3.ipynb se utiliza explícitamente el modelo:
-
-allenai/scibert_scivocab_uncased
-
-Este modelo es cargado mediante:
-
-AutoTokenizer.from_pretrained(model_name)
-AutoModelForSequenceClassification.from_pretrained(
+**Implementación:**
+En el notebook microproyecto3.ipynb se carga el modelo desde HuggingFace.
+El modelo se carga mediante la librería `transformers`:
+```python
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(
     model_name,
     num_labels=num_labels,
     id2label=id2label,
     label2id=label2id
 )
+```
 
-El modelo se entrena para clasificación multiclase con 5 etiquetas correspondientes a las categorías retóricas del dataset.
+---
 
-4. Variantes Entrenadas
+### 4. Variantes del Experimento
+Se evaluaron dos configuraciones base del modelo SciBERT para analizar el impacto del desbalance de clases y la eficiencia del entrenamiento:
 
-Se entrenan dos variantes del modelo SciBERT:
+| Parámetro | Variante 1 (Baseline) | Variante 2 (Downsampling) |
+| :--- | :--- | :--- |
+| **Learning Rate** | 2e-5 | 2e-5 |
+| **Batch Size** | 32 | 32 |
+| **Epochs** | 3 | 3 |
+| **Max Length** | 128 | 128 |
+| **Downsampling** | ❌ Desactivado | ✅ Activado |
 
-Variante 1 – Baseline (sin downsampling)
+---
 
-learning_rate = 2e-5
+### 5. Arquitectura del Proyecto
+El flujo de trabajo sigue principios de **MLOps**
 
-batch_size = 32
+**Componentes:**
+* **Entrenamiento:** Google Colab (utilizando aceleración por GPU).
+* **Tracking de Experimentos:** Servidor MLflow desplegado en **AWS EC2**.
+* **Backend Store:** Sistema de archivos local en la instancia.
+* **Versionamiento:** Git para código y **DVC** para datos.
+* **Almacenamiento de Datos:** Amazon S3 (según la arquitectura de la Entrega 1).
 
-num_epochs = 3
+**Flujo de Trabajo:**
+`Google Colab (SciBERT Training)` ➔ `AWS EC2 (MLflow Tracking Server)` ➔ `UI Web (Visualización de Runs)`
 
-max_length = 128
+> **Nota:** La instancia EC2 funciona exclusivamente como servidor de tracking y almacenamiento de metadatos; no realiza el procesamiento del entrenamiento.
 
-use_downsampling = False
+---
 
-Variante 2 – Con Downsampling
+### 6. Configuración del MLflow Tracking Server
+El servidor MLflow se ejecuta en una instancia **EC2 Ubuntu t3.micro**. Se utiliza el siguiente comando para asegurar que el servicio permanezca activo en segundo plano:
 
-Mismos hiperparámetros, pero:
-
-use_downsampling = True
-
-Esto permite evaluar el impacto del desbalance de clases observado en el dataset.
-
-5. Arquitectura del Proyecto
-
-El entrenamiento y el tracking están desacoplados.
-
-Componentes
-
-Entrenamiento: Google Colab (GPU)
-
-Tracking de experimentos: MLflow Server en AWS EC2
-
-Backend store: file-based
-
-Versionamiento: Git
-
-Gestión de datos: DVC + S3 (según Entrega 1)
-
-Flujo
-
-Colab (SciBERT training)
-→ MLflow Tracking Server (EC2)
-→ UI Web para visualización de runs
-
-La instancia EC2 funciona únicamente como tracking server y no realiza entrenamiento.
-
-6. Configuración del MLflow Tracking Server
-
-El servidor MLflow se ejecuta en una instancia EC2 Ubuntu t3.micro.
-
-Comando utilizado para levantar el servidor:
-
+```bash
 nohup mlflow server \
   --host 0.0.0.0 \
   --port 5000 \
@@ -133,76 +93,49 @@ nohup mlflow server \
   --default-artifact-root file:/home/ubuntu/dvc-proj/mlruns \
   > ~/mlflow_5000.log 2>&1 &
 
+# Guardar el PID para gestión del proceso
 echo $! | tee ~/mlflow_5000.pid
 
-URL del tracking server:
+URL del tracking server: http://54.205.108.123:5000
+```
 
-http://54.205.108.123:5000
+---
 
-
-7. Configuración en Google Colab
-
+### 7. Configuración en Google Colab
 Antes de entrenar, cada integrante debe configurar el tracking URI (Ejecutar este primer fragmento en colab):
 
+```python
 import os
 import mlflow
 
+# Configuración de conexión remota (Reemplazar VMIP por la IP pública de la instancia)
 MLFLOW_TRACKING_URI = "http://54.205.108.123:5000"
 os.environ["MLFLOW_TRACKING_URI"] = MLFLOW_TRACKING_URI
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
+# Definición del experimento en el servidor
 mlflow.set_experiment("pubmed-rct-classification")
 
-print("Tracking URI:", mlflow.get_tracking_uri())
+print("Tracking URI activo:", mlflow.get_tracking_uri())
+```
 
-El nombre del experimento utilizado en el notebook es:
+### 8. Métricas y Artefactos Registrados 📊
+Durante el proceso de entrenamiento y evaluación, se registran automáticamente en el servidor de **MLflow** los siguientes parámetros y archivos para asegurar la trazabilidad del experimento:
 
-pubmed-rct-classification
+* **Métricas de Rendimiento:** `train_loss`, `train_runtime`, `train_samples_per_second`.
+* **Métricas de Validación y Test:** `val_macro_f1`, `val_micro_f1`, `test_macro_f1`, `test_micro_f1`.
+* **Artefactos (Files):**
+    * `classification_report.txt`: Reporte detallado con precisión, recall y puntuación F1 por cada clase.
+    * `confusion_matrix.png`: Matriz de confusión visual para identificar errores sistemáticos del modelo.
+    * **Modelo Entrenado:** Registro de los pesos y la configuración del Transformer para facilitar su despliegue futuro.
 
-8. Métricas Registradas
+---
 
-Durante el entrenamiento se registran en MLflow:
+### 9. Reproducibilidad y Colaboración
+Este proyecto integra herramientas estándar de la industria para garantizar un ciclo de vida de **MLOps** robusto y transparente:
 
-train_loss
+1.  **Git:** Control de versiones exhaustivo del código fuente y notebooks.
+2.  **DVC + S3:** Gestión y versionamiento de datasets de gran volumen, permitiendo que cualquier integrante del equipo recupere la versión exacta de los datos utilizados.
+3.  **MLflow:** Centralización de resultados, lo que permite la comparación objetiva entre variantes y la auditoría de hiperparámetros.
 
-train_runtime
-
-train_samples_per_second
-
-val_macro_f1
-
-val_micro_f1
-
-test_macro_f1
-
-test_micro_f1
-
-Adicionalmente se registran como artifacts:
-
-classification_report.txt
-
-confusion_matrix.png
-
-Modelo entrenado
-
-9. Reproducibilidad
-
-El proyecto integra:
-
-Versionamiento de código con Git
-
-Versionamiento de datos con DVC
-
-Almacenamiento remoto en S3
-
-Tracking centralizado de experimentos con MLflow
-
-Esto permite:
-
-Comparación estructurada entre variantes
-
-Trazabilidad de hiperparámetros
-
-Auditoría de métricas
-
-Trabajo colaborativo del equipo
+Esta estructura asegura la **trazabilidad completa** de los experimentos, elimina el problema de "funciona en mi máquina" y facilita el trabajo colaborativo dentro del equipo de investigación.
