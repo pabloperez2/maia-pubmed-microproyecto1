@@ -22,17 +22,17 @@ uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
 
 **Linux / macOS**
 ```bash
-MAX_TEXT_LENGTH=5000 uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+MAX_TEXT_LENGTH=8000 uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
 **Windows CMD**
 ```cmd
-set MAX_TEXT_LENGTH=5000 && uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+set MAX_TEXT_LENGTH=8000 && uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
 **Windows PowerShell**
 ```powershell
-$env:MAX_TEXT_LENGTH="5000"; uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+$env:MAX_TEXT_LENGTH="8000"; uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
 Abrir:
