@@ -63,7 +63,6 @@
       --err:      #dc2626;
       --chip:     #e8eeff;
     }
-    /* ===== LIGHT MODE OVERRIDES ===== */
 
     /* ===== RESET ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -224,16 +223,11 @@
     }
     .hl:hover { filter: brightness(1.2); }
     .hl:active { transform: scale(.99); }
-    .hl.Background { background: rgba(var(--c-bg), .22); border-color: rgba(var(--c-bg),.35); }
-    .hl.Objective  { background: rgba(var(--c-obj), .22); border-color: rgba(var(--c-obj),.35); }
-    .hl.Methods    { background: rgba(var(--c-mth), .22); border-color: rgba(var(--c-mth),.35); }
-    .hl.Results    { background: rgba(var(--c-res), .22); border-color: rgba(var(--c-res),.35); }
-    .hl.Conclusions{ background: rgba(var(--c-con), .18); border-color: rgba(var(--c-con),.32); }
-    [data-theme="light"] .hl.Background { background: rgba(var(--c-bg), .14); border-color: rgba(var(--c-bg),.40); }
-    [data-theme="light"] .hl.Objective  { background: rgba(var(--c-obj), .14); border-color: rgba(var(--c-obj),.40); }
-    [data-theme="light"] .hl.Methods    { background: rgba(var(--c-mth), .16); border-color: rgba(var(--c-mth),.42); }
-    [data-theme="light"] .hl.Results    { background: rgba(var(--c-res), .14); border-color: rgba(var(--c-res),.40); }
-    [data-theme="light"] .hl.Conclusions{ background: rgba(var(--c-con), .12); border-color: rgba(var(--c-con),.38); }
+    .hl.Background { background: rgba(var(--c-bg), .22); border-color: rgba(var(--c-bg),.28); }
+    .hl.Objective  { background: rgba(var(--c-obj), .22); border-color: rgba(var(--c-obj),.28); }
+    .hl.Methods    { background: rgba(var(--c-mth), .22); border-color: rgba(var(--c-mth),.28); }
+    .hl.Results    { background: rgba(var(--c-res), .22); border-color: rgba(var(--c-res),.28); }
+    .hl.Conclusions{ background: rgba(var(--c-con), .18); border-color: rgba(var(--c-con),.24); }
 
     /* ===== POPOVER ===== */
     #popover {
@@ -603,6 +597,35 @@
       Conclusions:"Interpretación, implicaciones y cierre."
     };
 
+    // ── Security helpers ────────────────────────────────────────────────────
+    // Patrones que no deberían aparecer en un abstract biomédico legítimo.
+    const XSS_PATTERNS = [
+      /<\s*script/i, /javascript\s*:/i, /data\s*:/i,
+      /on\w+\s*=/i, /<\s*iframe/i, /<\s*object/i,
+      /<\s*embed/i, /vbscript\s*:/i,
+    ];
+    const SQLI_PATTERNS = [
+      /union\s+select/i, /drop\s+table/i, /insert\s+into/i,
+      /delete\s+from/i, /;\s*--/, /\/\*[\s\S]*?\*\//,
+    ];
+
+    function detectInjection(text) {
+      for (const p of XSS_PATTERNS)  if (p.test(text)) return "xss";
+      for (const p of SQLI_PATTERNS) if (p.test(text)) return "sqli";
+      return null;
+    }
+
+    // Client-side rate limiting: máx 10 envíos por minuto
+    const _submitLog = [];
+    const CLIENT_MAX_RPM = 10;
+    function isClientRateLimited() {
+      const now = Date.now();
+      while (_submitLog.length && now - _submitLog[0] > 60_000) _submitLog.shift();
+      if (_submitLog.length >= CLIENT_MAX_RPM) return true;
+      _submitLog.push(now);
+      return false;
+    }
+
     // ── State ───────────────────────────────────────────────────────────────
     let last   = null;   // último PredictOut
     const MAX_CHARS = 8000;
@@ -910,6 +933,22 @@
         return;
       }
 
+      // Validación de seguridad — XSS / SQLi
+      const injType = detectInjection(text);
+      if (injType) {
+        setToast("err", "Texto no permitido",
+          injType === "xss"
+            ? "El texto contiene patrones HTML o JavaScript no permitidos."
+            : "El texto contiene patrones SQL no permitidos.");
+        return;
+      }
+
+      // Rate limiting del lado cliente
+      if (isClientRateLimited()) {
+        setToast("err", "Demasiadas solicitudes", `Límite: ${CLIENT_MAX_RPM} envíos por minuto. Espere un momento.`);
+        return;
+      }
+
       // Reset UI
       $("out").innerHTML = "";
       $("kpis").innerHTML = "";
@@ -930,6 +969,12 @@
         });
         if (!res.ok) {
           const t = await res.text();
+          if (res.status === 429) {
+            throw new Error("El servidor rechazó la solicitud por exceso de peticiones. Espere un momento.");
+          }
+          if (res.status === 413) {
+            throw new Error("El texto es demasiado grande para ser procesado.");
+          }
           throw new Error(`Error del servidor (${res.status}): ${t}`);
         }
         last = await res.json();

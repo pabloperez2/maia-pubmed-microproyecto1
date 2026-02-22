@@ -40,7 +40,7 @@ except LookupError:
 # ---------------------------------------------------------------------------
 Label = Literal["Background", "Objective", "Methods", "Results", "Conclusions"]
 
-MODEL_VERSION   = os.getenv("MODEL_VERSION", "rhetoric-heuristic-v0.0.1")
+MODEL_VERSION   = os.getenv("MODEL_VERSION", "SciBERT_fine-tuned-v0.0.1")
 MAX_TEXT_LENGTH = int(os.getenv("MAX_TEXT_LENGTH", "8000"))   # caracteres
 
 # Directorio del frontend: resolvemos desde una variable de entorno o desde
@@ -51,7 +51,7 @@ FRONTEND_DIR   = Path(os.getenv("FRONTEND_DIR", str(_HERE / ".." / ".." / "front
 # ---------------------------------------------------------------------------
 # App FastAPI
 # ---------------------------------------------------------------------------
-app = FastAPI(title="Rhetorical Sentence Classifier", version="0.1.0")
+app = FastAPI(title="Medical Abstract Sentence Classifier", version="0.0.1")
 
 app.add_middleware(
     CORSMiddleware,
