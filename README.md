@@ -33,15 +33,19 @@ Cada registro incluye un `abstract_id` y un `sentence_id` para preservar el cont
 
 ---
 
-### 3. Modelo Utilizado
-Para este experimento se seleccionó **SciBERT** (`allenai/scibert_scivocab_uncased`), un modelo de lenguaje pre-entrenado específicamente sobre corpus científico de gran escala.
+### 3. Modelos utilizados
 
-**Implementación:**
-En el notebook microproyecto3.ipynb se carga el modelo desde HuggingFace.
-El modelo se carga mediante la librería `transformers`:
+En los notebooks del proyecto (microproyecto3.ipynb, microproyecto3_pablo.ipynb, microproyecto3_nata_scibert-comparison.ipynb) se probaron tres modelos de lenguaje preentrenados para clasificación de secuencias:
+
+- **allenai/scibert_scivocab_uncased** — SciBERT con vocabulario científico, sin distinguir mayúsculas/minúsculas.
+- **allenai/scibert_scivocab_cased** — SciBERT con vocabulario científico, preservando capitalización.
+- **microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext** — PubMedBERT, preentrenado en abstracts y full-text de PubMed.
+
+Cada modelo se carga mediante:
+
 ```python
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(
+AutoTokenizer.from_pretrained(model_name)
+AutoModelForSequenceClassification.from_pretrained(
     model_name,
     num_labels=num_labels,
     id2label=id2label,
@@ -49,18 +53,25 @@ model = AutoModelForSequenceClassification.from_pretrained(
 )
 ```
 
----
+Los modelos se entrenan para clasificación multiclase con 5 etiquetas correspondientes a las categorías retóricas del dataset (background, objective, methods, results, conclusions).
 
-### 4. Variantes del Experimento
-Se evaluaron dos configuraciones base del modelo SciBERT para analizar el impacto del desbalance de clases y la eficiencia del entrenamiento:
+### 4. Variantes Entrenadas
 
-| Parámetro | Variante 1 (Baseline) | Variante 2 (Downsampling) |
-| :--- | :--- | :--- |
-| **Learning Rate** | 2e-5 | 2e-5 |
-| **Batch Size** | 32 | 32 |
-| **Epochs** | 3 | 3 |
-| **Max Length** | 128 | 128 |
-| **Downsampling** | ❌ Desactivado | ✅ Activado |
+Para cada modelo (SciBERT y PubMedBERT) se entrenan dos variantes:
+
+**Variante 1 – Baseline (sin downsampling)**
+
+- learning_rate = 2e-5  
+- batch_size = 16 o 32  
+- num_epochs = 3  
+- max_length = 128  
+- use_downsampling = False  
+
+**Variante 2 – Con downsampling**
+
+- Mismos hiperparámetros, pero use_downsampling = True (dataset balanceado por clase).
+
+Esto permite evaluar el impacto del desbalance de clases y comparar el rendimiento entre modelos científicos (SciBERT) y biomédicos (PubMedBERT).
 
 ---
 
@@ -82,13 +93,19 @@ El flujo de trabajo sigue principios de **MLOps**
 ---
 
 ### 6. Configuración del MLflow Tracking Server
-El servidor MLflow se ejecuta en una instancia **EC2 Ubuntu t3.micro**. Se utiliza el siguiente comando para asegurar que el servicio permanezca activo en segundo plano:
+
+El servidor MLflow se ejecuta en una instancia EC2 Ubuntu (por ejemplo t3.micro). En la máquina virtual:
+
+```bash
+cd ~/dvc-proj
+source .venv/bin/activate
 
 ```bash
 nohup mlflow server \
   --host 0.0.0.0 \
   --port 5000 \
   --allowed-hosts '*' \
+  --cors-allowed-origins '*' \
   --backend-store-uri file:/home/ubuntu/dvc-proj/mlruns \
   --default-artifact-root file:/home/ubuntu/dvc-proj/mlruns \
   > ~/mlflow_5000.log 2>&1 &
@@ -99,25 +116,48 @@ echo $! | tee ~/mlflow_5000.pid
 URL del tracking server: http://54.205.108.123:5000
 ```
 
----
-
 ### 7. Configuración en Google Colab
-Antes de entrenar, cada integrante debe configurar el tracking URI (Ejecutar este primer fragmento en colab):
+
+Antes de entrenar, cada integrante debe configurar el tracking URI y el experimento (ejecutar en Colab):
 
 ```python
-import os
 import mlflow
 
 # Configuración de conexión remota (Reemplazar VMIP por la IP pública de la instancia)
 MLFLOW_TRACKING_URI = "http://54.205.108.123:5000"
-os.environ["MLFLOW_TRACKING_URI"] = MLFLOW_TRACKING_URI
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_experiment("microproyecto-entrega-Nata")
 
-# Definición del experimento en el servidor
-mlflow.set_experiment("pubmed-rct-classification")
-
-print("Tracking URI activo:", mlflow.get_tracking_uri())
+print("Tracking URI:", mlflow.get_tracking_uri())
 ```
+
+El nombre del experimento donde se registran los runs del equipo es **microproyecto-entrega-Nata**. La URL del tracking server (IP y puerto) puede variar según la instancia EC2; en los notebooks se usa el valor configurado en `MLFLOW_TRACKING_URI`.
+
+### 8. Métricas Registradas
+
+Durante el entrenamiento se registran en MLflow las métricas:
+
+- train_loss, train_runtime, train_samples_per_second  
+- val_macro_f1, val_micro_f1  
+- test_macro_f1, test_micro_f1  
+
+Y como parámetros: model_name, learning_rate, batch_size, num_epochs, max_length, use_downsampling, train_size.
+
+Adicionalmente se registran como artifacts:
+
+- classification_report.txt  
+- confusion_matrix.png  
+- Modelo entrenado (carpeta del modelo guardado)
+
+### 9. Reproducibilidad
+
+El proyecto integra:
+
+Versionamiento de código con Git
+
+Versionamiento de datos con DVC
+
+Almacenamiento remoto en S3
 
 ### 8. Métricas y Artefactos Registrados 📊
 Durante el proceso de entrenamiento y evaluación, se registran automáticamente en el servidor de **MLflow** los siguientes parámetros y archivos para asegurar la trazabilidad del experimento:
