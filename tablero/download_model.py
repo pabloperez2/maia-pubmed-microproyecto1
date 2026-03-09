@@ -121,20 +121,11 @@ def _all_valid() -> bool:
 def main():
     folder_id = os.environ.get("GDRIVE_FOLDER_ID", GDRIVE_FOLDER_ID_DEFAULT)
 
-    # 1. Validar que el FOLDER_ID fue configurado
-    if folder_id == "REEMPLAZAR_CON_FOLDER_ID_DE_GOOGLE_DRIVE":
-        print("ERROR: El FOLDER_ID de Google Drive no está configurado.")
-        print()
-        print("  Editar download_model.py y reemplazar GDRIVE_FOLDER_ID_DEFAULT,")
-        print("  o definir la variable de entorno:")
-        print("    export GDRIVE_FOLDER_ID=1aBcDeFgHiJkLmNoPqRsTuVwXyZ  # Linux/macOS")
-        print('    $env:GDRIVE_FOLDER_ID="1aBcDeFgHiJkLmNoPqRsTuVwXyZ"  # PowerShell')
-        print()
-        print("  Cómo obtener el FOLDER_ID:")
-        print("  1. Subir todos los archivos del modelo a una carpeta en Google Drive")
-        print("  2. Clic derecho sobre la CARPETA → Compartir → 'Cualquier persona con el enlace'")
-        print("  3. El enlace tiene la forma:")
-        print("     https://drive.google.com/drive/folders/<FOLDER_ID>")
+    # 1. Validar que el FOLDER_ID no está vacío
+    folder_id = folder_id.strip()
+    if not folder_id:
+        print("ERROR: El FOLDER_ID de Google Drive está vacío.")
+        print("  Verificar GDRIVE_FOLDER_ID_DEFAULT en download_model.py")
         sys.exit(1)
 
     # 2. Verificar si todos los archivos ya existen y son válidos
