@@ -1,5 +1,14 @@
+# API
 fastapi
 uvicorn[standard]
 pydantic
+
+# Segmentación de oraciones
 nltk
 
+# Modelo SciBERT fine-tuned (transformers + backend PyTorch CPU)
+# torch CPU — evita descargar CUDA (~2 GB) innecesario en el contenedor
+torch>=2.2 --index-url https://download.pytorch.org/whl/cpu
+transformers>=4.40
+accelerate>=0.29
+safetensors

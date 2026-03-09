@@ -10,25 +10,31 @@
 #          Si quieres forzar emulación x86, descomenta: platform: linux/amd64
 
 services:
-  rhetoric-app:
+  maia-app:
     build:
       context: .
       # Sin "platform" → Docker elige la variante nativa del host automáticamente.
       # Descomenta solo si necesitas forzar x86 en Apple Silicon:
       # platform: linux/amd64
-    container_name: rhetoric-app
+    container_name: maia-pubmed-mp1
     ports:
-      # Host:Contenedor — cambia el puerto izquierdo si 8000 está ocupado
-      - "8000:8080"
+      # Puerto 8080 en el host → 8080 en el contenedor.
+      # Cambia el número izquierdo si el puerto está ocupado (ej: "9090:8080").
+      - "8080:8080"
     environment:
-      - MODEL_VERSION=rhetoric-heuristic-v0.0.1
+      - MODEL_VERSION=allenai/scibert_scivocab_cased-v0.0.1
+      - MODEL_DIR=/app/backend/app/model/scibert_pubmed
       - MAX_TEXT_LENGTH=8000
+      - MAX_RPM=20
       - FRONTEND_DIR=/app/frontend
+      # Permite acceso desde cualquier origen (red local, navegadores remotos).
+      # Las validaciones XSS/SQLi y el rate limiting siguen activos en el backend.
+      - ALLOWED_ORIGINS=*
     healthcheck:
-      # curl instalado en el Dockerfile → funciona igual en Win/Mac/Linux
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      # 60s: tiempo necesario para que SciBERT (419 MB) cargue en CPU.
+      start_period: 60s
     restart: unless-stopped

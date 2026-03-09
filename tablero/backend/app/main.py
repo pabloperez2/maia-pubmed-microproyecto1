@@ -130,12 +130,16 @@ app = FastAPI(title="Medical Abstract Sentence Classifier", version="0.0.1")
 # ---------------------------------------------------------------------------
 # CORS — restringir a orígenes conocidos (ajustar en producción)
 # ---------------------------------------------------------------------------
-_ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080").split(",") if o.strip()]
+# ALLOWED_ORIGINS="*" permite acceso desde cualquier origen (red local, etc.).
+# Las protecciones XSS/SQLi, rate limiting y security headers siguen activas.
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080").strip()
+_ALLOW_ALL_ORIGINS = _raw_origins == "*"
+_ALLOWED_ORIGINS   = ["*"] if _ALLOW_ALL_ORIGINS else [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
-    allow_credentials=False,          # no cookies/auth cross-origin
+    allow_credentials=False,          # no cookies/auth cross-origin — incluso con ALLOWED_ORIGINS=*
     allow_methods=["GET", "POST"],    # sólo lo que usa la app
     allow_headers=["Content-Type"],
 )
