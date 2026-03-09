@@ -9,7 +9,7 @@ Clasifica cada oración en 5 categorías IMRAD:
 `Background` · `Objective` · `Methods` · `Results` · `Conclusions`
 
 ```
-solucion/
+tablero/
 ├── download_model.py          ← PASO 1: descargar modelo desde Google Drive
 ├── Dockerfile
 ├── docker-compose.yml
@@ -50,6 +50,7 @@ solucion/
 ```bash
 git clone https://github.com/pabloperez2/maia-pubmed-microproyecto1.git
 cd maia-pubmed-microproyecto1
+cd tablero
 ```
 
 ---
