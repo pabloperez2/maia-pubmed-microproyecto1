@@ -12,6 +12,11 @@ __pycache__/
 *.egg-info/
 .env
 
+# Entorno virtual local
+.venv/
+venv/
+env/
+
 # Docker
 .dockerignore
 

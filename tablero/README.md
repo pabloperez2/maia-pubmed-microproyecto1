@@ -220,15 +220,45 @@ docker compose down --rmi local
 
 ## Ejecución local sin Docker
 
-Útil para desarrollo y depuración. Requiere Python 3.10+ y las dependencias instaladas.
+Útil para desarrollo y depuración. Todos los comandos se ejecutan desde la raíz de la carpeta `tablero/`.
 
-### 1 — Instalar dependencias
+### 1 — Crear y activar el entorno virtual
+
+#### Linux / macOS
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+#### Windows — CMD
+```cmd
+python -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+#### Windows — PowerShell
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+> Si PowerShell bloquea la ejecución de scripts, ejecutar primero:
+> `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+
+### 2 — Instalar dependencias
+
+Con el venv activo, desde la raíz de `tablero/`:
 
 ```bash
 pip install -r backend/requirements.txt
 ```
 
-### 2 — Arrancar el backend
+> La primera vez descarga torch CPU + transformers (~1.5 GB). Las siguientes ejecuciones
+> usan el caché del venv y arrancan en segundos.
+
+### 3 — Arrancar el backend
+
+Con el venv activo, desde la raíz de `tablero/`:
 
 #### Linux / macOS
 ```bash
@@ -257,18 +287,18 @@ $env:MAX_RPM="20"
 uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
-### 3 — Verificar
+### 4 — Verificar
 
 ```bash
 curl http://localhost:8080/health
 ```
 
 > El modelo tarda **30–60 segundos** en cargar la primera vez.
-> Revisar el campo `model_backend` en la respuesta — debe ser `scibert_finetuned`.
+> Revisar el campo `model_backend` — debe ser `scibert_finetuned`.
 
-### Arranque mínimo (sin variables de entorno)
+### Arranque mínimo (sin modelo — solo heurística)
 
-Si solo se quiere probar la heurística sin cargar el modelo:
+Si solo se quiere probar la UI sin cargar SciBERT, omitir las variables de entorno:
 
 #### Linux / macOS
 ```bash
@@ -286,6 +316,13 @@ uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
 > Sin `MODEL_DIR`, el backend arranca en modo `heuristic_fallback` en menos de 1 segundo.
+> El indicador en la UI mostrará punto amarillo y texto **"Heurística activa"**.
+
+### Desactivar el entorno virtual
+
+```bash
+deactivate
+```
 
 ---
 
