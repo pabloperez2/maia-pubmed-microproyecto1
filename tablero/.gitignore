@@ -1,0 +1,20 @@
+# Archivos del modelo SciBERT — se descargan con python download_model.py
+backend/app/model/scibert_pubmed/model.safetensors
+backend/app/model/scibert_pubmed/tokenizer.json
+backend/app/model/scibert_pubmed/tokenizer_config.json
+backend/app/model/scibert_pubmed/config.json
+backend/app/model/scibert_pubmed/label_meta.json
+backend/app/model/scibert_pubmed/training_args.bin
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db

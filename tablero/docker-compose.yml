@@ -1,17 +1,34 @@
+# Compatible con Windows (Docker Desktop + WSL2), macOS (Intel & Apple Silicon)
+# y Linux (amd64 / arm64).
+#
+# Windows: Docker Desktop debe estar en modo "Linux containers" (no Windows containers).
+#          Git debe tener core.autocrlf=false, o el .gitattributes del repo debe
+#          forzar LF para *.py y *.txt (ya incluido en este repo).
+#
+# Apple Silicon (M1/M2/M3): python:3.11-slim tiene variante arm64 nativa,
+#          no se necesita ningún flag adicional.
+#          Si quieres forzar emulación x86, descomenta: platform: linux/amd64
+
 services:
   rhetoric-app:
-    build: .
+    build:
+      context: .
+      # Sin "platform" → Docker elige la variante nativa del host automáticamente.
+      # Descomenta solo si necesitas forzar x86 en Apple Silicon:
+      # platform: linux/amd64
     container_name: rhetoric-app
     ports:
+      # Host:Contenedor — cambia el puerto izquierdo si 8000 está ocupado
       - "8000:8080"
     environment:
       - MODEL_VERSION=rhetoric-heuristic-v0.0.1
       - MAX_TEXT_LENGTH=8000
       - FRONTEND_DIR=/app/frontend
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      # curl instalado en el Dockerfile → funciona igual en Win/Mac/Linux
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     restart: unless-stopped
