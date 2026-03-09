@@ -16,20 +16,6 @@ Archivos descargados (carpeta scibert_pubmed en Drive):
 
 Uso:
     python download_model.py
-
-Cómo obtener el FOLDER_ID de Google Drive:
-    1. Subir TODOS los archivos del modelo a UNA carpeta en Google Drive
-    2. Clic derecho sobre la CARPETA → Compartir → "Cualquier persona con el enlace"
-    3. Copiar el enlace. Tendrá esta forma:
-       https://drive.google.com/drive/folders/1aBcDeFgHiJkLmNoPqRsTuVwXyZ
-                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                                               Este es el FOLDER_ID
-    4. Reemplazar GDRIVE_FOLDER_ID_DEFAULT con ese valor
-
-Cómo obtener los hash MD5 de tus archivos originales:
-    Linux/macOS:  md5sum backend/app/model/scibert_pubmed/*
-    Windows:      Get-FileHash backend\app\model\scibert_pubmed\* -Algorithm MD5
-    Luego reemplazar los valores "PENDIENTE" en MD5_HASHES con los resultados.
 """
 
 import hashlib
@@ -39,7 +25,7 @@ from pathlib import Path
 
 # ── Configuración ─────────────────────────────────────────────────────────
 # Reemplazar con el FOLDER_ID real después de crear la carpeta en Google Drive
-GDRIVE_FOLDER_ID_DEFAULT = "REEMPLAZAR_CON_FOLDER_ID_DE_GOOGLE_DRIVE"
+GDRIVE_FOLDER_ID_DEFAULT = "1ue3EECOilm3U11mV3xctRNDDung25Mg0"
 
 # Destino local — directorio donde se guardan todos los archivos
 DEST_DIR = (
@@ -55,12 +41,12 @@ DEST_DIR = (
 #
 # Si un hash es "PENDIENTE", ese archivo se valida solo por tamaño (fallback).
 MD5_HASHES = {
-    "model.safetensors":    "PENDIENTE",
-    "tokenizer.json":       "PENDIENTE",
-    "tokenizer_config.json":"PENDIENTE",
-    "config.json":          "PENDIENTE",
-    "label_meta.json":      "PENDIENTE",
-    "training_args.bin":    "PENDIENTE",
+    "model.safetensors":    "f90526590efdac1e05401042dbce4cf3",
+    "tokenizer.json":       "93dae41d0df0ca629e81db44e2aaa155",
+    "tokenizer_config.json":"e94e43d426ff918730baab4033ba3c99",
+    "config.json":          "15ca9de4a72fb10cf71e57dff2ca29e2",
+    "label_meta.json":      "7ad9cabdb09badfdee10a726456d1763",
+    "training_args.bin":    "7aa96523e907b1146ef55db2599ab118",
 }
 
 # Tamaños mínimos en bytes (fallback cuando el hash es "PENDIENTE")
@@ -136,7 +122,7 @@ def main():
     folder_id = os.environ.get("GDRIVE_FOLDER_ID", GDRIVE_FOLDER_ID_DEFAULT)
 
     # 1. Validar que el FOLDER_ID fue configurado
-    if folder_id == GDRIVE_FOLDER_ID_DEFAULT:
+    if folder_id == "REEMPLAZAR_CON_FOLDER_ID_DE_GOOGLE_DRIVE":
         print("ERROR: El FOLDER_ID de Google Drive no está configurado.")
         print()
         print("  Editar download_model.py y reemplazar GDRIVE_FOLDER_ID_DEFAULT,")

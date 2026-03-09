@@ -72,7 +72,7 @@ El script:
 **Salida esperada:**
 ```
 Descargando modelo SciBERT completo desde Google Drive...
-  FOLDER_ID : 1OanVcfVVLcFWte9xqV0WiTA9N4GbKtPS
+  FOLDER_ID : 1ue3EECOilm3U11mV3xctRNDDung25Mg0
   Destino   : .../backend/app/model/scibert_pubmed
 
 Retrieving folder contents
