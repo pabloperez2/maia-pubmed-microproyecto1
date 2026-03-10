@@ -1,7 +1,6 @@
 # MAIA - UNIANDES
 # Edwin Cifuentes
 #
-# Solo busca palabras clave en las oraciones para definir una categoria
 # Las oraciones se determinan segmentación NLTK, y es robusta ante abreviaturas médicas comunes.
 # valor de confianza esta dado con fines de prueba en tablero, se deberá calcular por los modelos reales en el futuro, 
 # esta en la cantidad de señales encontradas y la longitud de la oración.
