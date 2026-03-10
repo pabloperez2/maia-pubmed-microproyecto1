@@ -37,6 +37,7 @@ tablero/
 | Herramienta | Versión mínima | Verificar |
 |---|---|---|
 | Python | 3.10 | `python --version` |
+| pip | 24.0 | `sudo apt install python3-pip` `pip --version`  |
 | Docker Desktop / Docker Engine | 24.0 | `docker --version` |
 | Docker Compose | 2.20 | `docker compose version` |
 | Git | 2.x | `git --version` |
@@ -54,14 +55,53 @@ cd tablero
 ```
 
 ---
+## Paso 2 — Instalación de entorno virtual
+```bash
+sudo apt install python3.12-venv
+```
 
-## Paso 2 — Descargar el modelo desde Google Drive
+## Paso 3 - Crear y activar el entorno virtual
+
+#### Linux / macOS
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+#### Windows — CMD
+```cmd
+python3 -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+#### Windows — PowerShell
+```powershell
+python3 -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+> Si PowerShell bloquea la ejecución de scripts, ejecutar primero:
+> `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+
+## Paso 4 — Instalar dependencias
+
+Con el venv activo, desde la raíz de `tablero/`:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+> La primera vez descarga torch CPU + transformers (~1.5 GB). Las siguientes ejecuciones
+> usan el caché del venv y arrancan en segundos.
+
+
+## Paso 5 — Descargar el modelo desde Google Drive
 
 Los 6 archivos del modelo **no están en el repositorio Git** (superan el límite de 100 MB de GitHub).
 Se descargan desde Google Drive con el script incluido:
 
 ```bash
-python download_model.py
+python3 download_model.py
 ```
 
 El script:
@@ -100,7 +140,7 @@ Ahora puede construir el contenedor:
 
 ---
 
-## Paso 3 — Instalar Docker
+## Paso 6 — Instalar Docker
 
 ### Windows
 1. Descargar **Docker Desktop** desde https://www.docker.com/products/docker-desktop
@@ -124,12 +164,18 @@ docker compose version
 
 ### Linux (Ubuntu / Debian)
 ```bash
+# Eliminacioó de versiones previas
+sudo apt-get remove docker docker-engine docker.io containerd runc
+
 # Instalar Docker Engine
 sudo apt-get update
-sudo apt-get install -y ca-certificates curl
+sudo apt-get install -y ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyrings/docker.asc
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+ echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee
+/etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx—ptugin docker-compose-plugin
 
 # Agregar usuario al grupo docker (evita usar sudo)
 sudo usermod -aG docker $USER
@@ -138,11 +184,14 @@ newgrp docker
 # Verificar
 docker --version
 docker compose version
+
+# Hola mundo desde docker
+docker run hello-world
 ```
 
 ---
 
-## Paso 4 — Construir la imagen Docker
+## Paso 7 — Construir la imagen Docker
 
 Desde la raíz del proyecto (donde está el `Dockerfile`):
 
@@ -155,7 +204,7 @@ docker compose build
 
 ---
 
-## Paso 5 — Levantar el contenedor
+## Paso 8 — Levantar el contenedor
 
 ```bash
 docker compose up -d
@@ -172,7 +221,7 @@ docker compose logs -f
 
 ---
 
-## Paso 6 — Verificar el despliegue
+## Paso 9 — Verificar el despliegue
 
 ```bash
 # Estado del contenedor (debe aparecer "healthy")
@@ -222,41 +271,7 @@ docker compose down --rmi local
 
 Útil para desarrollo y depuración. Todos los comandos se ejecutan desde la raíz de la carpeta `tablero/`.
 
-### 1 — Crear y activar el entorno virtual
-
-#### Linux / macOS
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
-
-#### Windows — CMD
-```cmd
-python -m venv .venv
-.venv\Scripts\activate.bat
-```
-
-#### Windows — PowerShell
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-
-> Si PowerShell bloquea la ejecución de scripts, ejecutar primero:
-> `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-
-### 2 — Instalar dependencias
-
-Con el venv activo, desde la raíz de `tablero/`:
-
-```bash
-pip install -r backend/requirements.txt
-```
-
-> La primera vez descarga torch CPU + transformers (~1.5 GB). Las siguientes ejecuciones
-> usan el caché del venv y arrancan en segundos.
-
-### 3 — Arrancar el backend
+### 1 — Arrancar el backend
 
 Con el venv activo, desde la raíz de `tablero/`:
 
@@ -266,7 +281,7 @@ MODEL_DIR=./backend/app/model/scibert_pubmed \
 MODEL_VERSION=allenai/scibert_scivocab_cased-v0.0.1 \
 MAX_TEXT_LENGTH=8000 \
 MAX_RPM=20 \
-uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 #### Windows — CMD
@@ -275,7 +290,7 @@ set MODEL_DIR=.\backend\app\model\scibert_pubmed
 set MODEL_VERSION=allenai/scibert_scivocab_cased-v0.0.1
 set MAX_TEXT_LENGTH=8000
 set MAX_RPM=20
-uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 #### Windows — PowerShell
@@ -284,10 +299,10 @@ $env:MODEL_DIR=".\backend\app\model\scibert_pubmed"
 $env:MODEL_VERSION="allenai/scibert_scivocab_cased-v0.0.1"
 $env:MAX_TEXT_LENGTH="8000"
 $env:MAX_RPM="20"
-uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
-### 4 — Verificar
+### 2 — Verificar
 
 ```bash
 curl http://localhost:8080/health
@@ -302,17 +317,17 @@ Si solo se quiere probar la UI sin cargar SciBERT, omitir las variables de entor
 
 #### Linux / macOS
 ```bash
-uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 #### Windows — CMD
 ```cmd
-uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 #### Windows — PowerShell
 ```powershell
-uvicorn backend.app.main:app --host 127.0.0.1 --port 8080 --reload
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 > Sin `MODEL_DIR`, el backend arranca en modo `heuristic_fallback` en menos de 1 segundo.
