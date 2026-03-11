@@ -133,32 +133,6 @@ print("Tracking URI:", mlflow.get_tracking_uri())
 
 El nombre del experimento donde se registran los runs del equipo es **microproyecto-entrega-Nata**. La URL del tracking server (IP y puerto) puede variar según la instancia EC2; en los notebooks se usa el valor configurado en `MLFLOW_TRACKING_URI`.
 
-### 8. Métricas Registradas
-
-Durante el entrenamiento se registran en MLflow las métricas:
-
-- train_loss, train_runtime, train_samples_per_second  
-- val_macro_f1, val_micro_f1  
-- test_macro_f1, test_micro_f1  
-
-Y como parámetros: model_name, learning_rate, batch_size, num_epochs, max_length, use_downsampling, train_size.
-
-Adicionalmente se registran como artifacts:
-
-- classification_report.txt  
-- confusion_matrix.png  
-- Modelo entrenado (carpeta del modelo guardado)
-
-### 9. Reproducibilidad
-
-El proyecto integra:
-
-Versionamiento de código con Git
-
-Versionamiento de datos con DVC
-
-Almacenamiento remoto en S3
-
 ### 8. Métricas y Artefactos Registrados 📊
 Durante el proceso de entrenamiento y evaluación, se registran automáticamente en el servidor de **MLflow** los siguientes parámetros y archivos para asegurar la trazabilidad del experimento:
 
