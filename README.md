@@ -1,6 +1,6 @@
-# Microproyecto 1: Sequential Sentence Classification in Medical Abstracts
+# Microproyecto: Sequential Sentence Classification in Medical Abstracts
 
-## Entrega 2 – Entrenamiento con Transformers y Tracking con MLflow 🚀
+## Entrega Final 🚀
 
 ### 1. Contexto del Proyecto
 En la investigación médica, los artículos científicos suelen presentarse en resúmenes estructurados donde cada oración cumple un rol específico: **Background, Objective, Methods, Results o Conclusions**.
